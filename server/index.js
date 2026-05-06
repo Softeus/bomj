@@ -3,7 +3,13 @@ import cors from 'cors';
 import db from './db.js';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:4173',
+    'https://bomj-client.onrender.com',
+  ],
+}));
 app.use(express.json());
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -132,6 +138,11 @@ app.post('/api/tasks/:id/cancel', auth, (req, res) => {
 // ─── User info ───────────────────────────────────────────────────────────────
 app.get('/api/me', auth, (req, res) => {
   res.json(req.user);
+});
+
+// ─── Health check ────────────────────────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 4000;
