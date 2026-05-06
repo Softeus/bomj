@@ -1,6 +1,56 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from './api.js';
 
+// ─── Disclaimer Modal ───────────────────────────────────────────────────────
+const DISCLAIMER_KEY = 'bomj_disclaimer_accepted';
+
+function DisclaimerModal({ onClose }) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box">
+        <h2>⚠️ ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ</h2>
+        <div className="legal-text">
+          <p><strong>Настоящий сайт является исключительно шуточным/пародийным проектом (сатирическим произведением искусства) и не осуществляет реальную финансовую, посредническую, трудовую или иную регулируемую деятельность.</strong></p>
+          <br />
+          <p><span className="law">1. Ст. 1270 ГК РФ</span> — Сайт является результатом творческой деятельности (пародия/карикатура). Любые совпадения с реальными сервисами случайны.</p>
+          <br />
+          <p><span className="law">2. Ст. 1062 ГК РФ</span> — Требования, связанные с организацией игр/пари/финансовых операций на сайте, не подлежат судебной защите, так как сайт носит развлекательный характер.</p>
+          <br />
+          <p><span className="law">3. ФЗ № 54-ФЗ (ККТ)</span> — Сайт не осуществляет приём денежных средств за товары/работы/услуги. Все финансовые операции (USDT, Tron) являются частью игровой механики и не имеют реальной юридической силы.</p>
+          <br />
+          <p><span className="law">4. ФЗ № 152-ФЗ (О персональных данных)</span> — Номер телефона используется исключительно для идентификации в рамках игрового процесса. Сайт не собирает, не хранит и не передаёт третьим лицам персональные данные. Вы можете удалить аккаунт в любой момент, написав администратору.</p>
+          <br />
+          <p><span className="law">5. Ст. 5.61 КоАП РФ / Ст. 128.1 УК РФ</span> — Использование ненормативной лексики, оскорблений, клеветы на сайте и в его названии является частью художественного замысла и не направлено на унижение чьей-либо чести и достоинства.</p>
+          <br />
+          <p><span className="law">6. Ст. 14.1 КоАП РФ</span> — Сайт не осуществляет предпринимательскую деятельность. Все взаимодействия между пользователями происходят на их собственный страх и риск и не являются реальными трудовыми/гражданско-правовыми отношениями.</p>
+          <br />
+          <p><strong>Администрация сайта не несёт ответственности:</strong></p>
+          <p>— за любые убытки, прямые или косвенные, связанные с использованием сайта;</p>
+          <p>— за действия пользователей, совершённые на основе информации с сайта;</p>
+          <p>— за содержание задач, созданных пользователями;</p>
+          <p>— за невозможность использования сайта по техническим причинам.</p>
+          <br />
+          <p style={{ color: '#ff7043', fontWeight: 700, textAlign: 'center' }}>Используя сайт, вы подтверждаете, что:
+          — осознаёте его шуточный характер;
+          — не имеете претензий к администрации;
+          — вам есть 18 лет (или вы смотрите на это как на мем).</p>
+        </div>
+        <button className="btn btn-primary" onClick={onClose}>
+          Я всё понял. Погнали.
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DisclaimerFooter({ onShow }) {
+  return (
+    <div className="disclaimer-footer">
+      <button onClick={onShow}>Юридическая информация / Отказ от ответственности</button>
+    </div>
+  );
+}
+
 function Toast({ message, type, onClose }) {
   useEffect(() => {
     if (!message) return;
@@ -105,7 +155,7 @@ function AuthScreen({ onAuth }) {
 }
 
 // ─── Customer View ───────────────────────────────────────────────────────────
-function CustomerView({ user, onLogout }) {
+function CustomerView({ user, onLogout, showDisclaimer, onShowDisclaimer }) {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
@@ -211,15 +261,17 @@ function CustomerView({ user, onLogout }) {
         ))}
       </div>
 
+      <DisclaimerFooter onShow={onShowDisclaimer} />
       <div className="bottom-bar">
         <button className="btn btn-small btn-secondary" onClick={onLogout}>Выйти</button>
       </div>
+      {showDisclaimer && <DisclaimerModal onClose={() => onShowDisclaimer(false)} />}
     </div>
   );
 }
 
 // ─── Worker View ─────────────────────────────────────────────────────────────
-function WorkerView({ user, onLogout }) {
+function WorkerView({ user, onLogout, showDisclaimer, onShowDisclaimer }) {
   const [tasks, setTasks] = useState([]);
   const [toast, setToast] = useState(null);
 
@@ -305,9 +357,11 @@ function WorkerView({ user, onLogout }) {
         ))}
       </div>
 
+      <DisclaimerFooter onShow={onShowDisclaimer} />
       <div className="bottom-bar">
         <button className="btn btn-small btn-secondary" onClick={onLogout}>Выйти</button>
       </div>
+      {showDisclaimer && <DisclaimerModal onClose={() => onShowDisclaimer(false)} />}
     </div>
   );
 }
@@ -316,6 +370,7 @@ function WorkerView({ user, onLogout }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   useEffect(() => {
     const uid = localStorage.getItem('userId');
@@ -326,6 +381,10 @@ export default function App() {
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
+    }
+    // Show disclaimer on first visit
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      setShowDisclaimer(true);
     }
   }, []);
 
@@ -338,12 +397,12 @@ export default function App() {
   }
 
   if (!user) {
-    return <AuthScreen onAuth={(u) => setUser(u)} />;
+    return <AuthScreen onAuth={(u) => setUser(u)} showDisclaimer={showDisclaimer} onShowDisclaimer={setShowDisclaimer} />;
   }
 
   if (user.role === 'customer') {
-    return <CustomerView user={user} onLogout={() => { localStorage.removeItem('userId'); setUser(null); }} />;
+    return <CustomerView user={user} onLogout={() => { localStorage.removeItem('userId'); setUser(null); }} showDisclaimer={showDisclaimer} onShowDisclaimer={setShowDisclaimer} />;
   }
 
-  return <WorkerView user={user} onLogout={() => { localStorage.removeItem('userId'); setUser(null); }} />;
+  return <WorkerView user={user} onLogout={() => { localStorage.removeItem('userId'); setUser(null); }} showDisclaimer={showDisclaimer} onShowDisclaimer={setShowDisclaimer} />;
 }
